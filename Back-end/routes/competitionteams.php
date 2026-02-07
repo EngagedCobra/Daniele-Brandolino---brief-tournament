@@ -22,12 +22,12 @@ Router::get('/teams/{team_id}/competitions', function ($team_id) {
 
         // Trova tutte le associazioni per questo team
         $allCompetitionTeams = CompetitionTeam::all();
-        $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct['team_id'] == $team_id);
+        $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct->team_id == $team_id);
         
         // Recupera le competizioni
         $competitions = [];
         foreach ($filtered as $ct) {
-            $competition = Competition::find($ct['competition_id']);
+            $competition = Competition::find($ct->competition_id);
             if ($competition !== null) {
                 $competitions[] = $competition;
             }
@@ -51,13 +51,12 @@ Router::get('/competitions/{competition_id}/teams', function ($competition_id) {
         }
 
         // Trova tutte le associazioni per questa competizione
-        $allCompetitionTeams = CompetitionTeam::all();
-        $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct['competition_id'] == $competition_id);
+        $allCompetitionTeams = CompetitionTeam::where("competition_id", "=", $competition_id);
         
         // Recupera i teams
         $teams = [];
-        foreach ($filtered as $ct) {
-            $team = Team::find($ct['team_id']);
+        foreach ($allCompetitionTeams as $ct) {
+            $team = Team::find($ct->team_id);
             if ($team !== null) {
                 $teams[] = $team;
             }
@@ -97,7 +96,7 @@ Router::post('/competitions/{competition_id}/teams', function ($competition_id) 
         // Verifica se l'associazione esiste già
         $existing = CompetitionTeam::all();
         foreach ($existing as $ct) {
-            if ($ct['competition_id'] == $competition_id && $ct['team_id'] == $data['team_id']) {
+            if ($ct->competition_id == $competition_id && $ct->team_id == $data['team_id']) {
                 Response::error('Il team è già associato a questa competizione', Response::HTTP_BAD_REQUEST)->send();
                 return;
             }

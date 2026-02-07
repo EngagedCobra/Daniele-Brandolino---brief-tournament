@@ -200,7 +200,7 @@ abstract class BaseModel
                 $columnValue = $item[$column];
                 
                 return match($operator) {
-                    '=' => $columnValue == $value,
+                    '=' => $columnValue === $value,
                     '!=', '<>' => $columnValue != $value,
                     '>' => $columnValue > $value,
                     '<' => $columnValue < $value,

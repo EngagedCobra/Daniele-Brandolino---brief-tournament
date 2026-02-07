@@ -18,6 +18,7 @@ class Game extends BaseModel
     public ?int $phase = null;
     public ?int $winner = null;
     public ?string $result = null;
+    public ?int $position = null;
 
     protected static ?string $table = "games";
 
@@ -122,6 +123,10 @@ class Game extends BaseModel
                         return "Il formato del risultato deve essere 'X-Y' (es. '2-1')";
                     }
                 }
+            ],
+            "position" => [
+                "required",
+                "numeric"
             ]
         ];
     }

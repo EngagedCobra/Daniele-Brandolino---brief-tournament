@@ -122,7 +122,7 @@ Router::get('/teams/{id}/athletes', function ($id) {
 
         // Trova tutti gli atleti del team
         $allAthletes = Athlete::all();
-        $athletes = array_filter($allAthletes, fn($athlete) => $athlete['team_ref'] == $id);
+        $athletes = array_filter($allAthletes, fn($athlete) => $athlete['team_ref'] === $id);
 
         Response::success(array_values($athletes))->send();
     } catch (\Exception $e) {
@@ -143,7 +143,7 @@ Router::get('/teams/{id}/competitions', function ($id) {
 
         // Trova tutte le associazioni per questo team
         $allCompetitionTeams = CompetitionTeam::all();
-        $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct['team_id'] == $id);
+        $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct['team_id'] === $id);
         
         // Recupera le competizioni
         $competitions = [];

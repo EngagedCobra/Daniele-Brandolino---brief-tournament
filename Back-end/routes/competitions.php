@@ -3,6 +3,7 @@
 /* Routes per gestione competitions */
 
 use App\Models\Competition;
+use App\Models\CompetitionTeam;
 use App\Models\Game;
 use App\Utils\Response;
 use App\Utils\Request;
@@ -39,24 +40,104 @@ Router::get('/competitions/{id}', function ($id) {
 });
 
 /**
- * POST /api/competitions - Crea nuova competizione
+ * POST /api/competitions - Crea competizione
  */
 Router::post('/competitions', function () {
     try {
         $request = new Request();
         $data = $request->json();
 
-        $errors = Competition::validate($data);
-        if (!empty($errors)) {
-            Response::error('Errore di validazione', Response::HTTP_BAD_REQUEST, $errors)->send();
+        if (!isset($data['name']) || !isset($data['team_number'])) {
+            Response::error('name e team_number sono obbligatori', Response::HTTP_BAD_REQUEST)->send();
             return;
         }
 
-        $competition = Competition::create($data);
+        // Calcola automaticamente le phases in base al team_number
+        $phases = log($data['team_number'], 2); // logaritmo base 2
+
+        $competition = Competition::create([
+            'name' => $data['name'],
+            'team_number' => $data['team_number'],
+            'phases' => $phases
+        ]);
 
         Response::success($competition, Response::HTTP_CREATED, "Competizione creata con successo")->send();
     } catch (\Exception $e) {
-        Response::error('Errore durante la creazione della nuova competizione: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
+        Response::error('Errore: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
+    }
+});
+
+/**
+ * POST /api/competitions/{id}/start - Inizia il torneo e genera i match
+ */
+Router::post('/competitions/{id}/start', function ($id) {
+    try {
+        $competition = Competition::find($id);
+        
+        if ($competition === null) {
+            Response::error('Competizione non trovata', Response::HTTP_NOT_FOUND)->send();
+            return;
+        }
+
+        // Verifica che ci siano abbastanza team inseriti
+        $competitionTeams = CompetitionTeam::all();
+        $teamsInCompetition = array_filter($competitionTeams, fn($ct) => $ct->competition_id == $id);
+        $teamCount = count($teamsInCompetition);
+
+        if ($teamCount !== $competition->team_number) {
+            Response::error(
+                "Numero team non corretto. Richiesti: {$competition->team_number}, inseriti: {$teamCount}",
+                Response::HTTP_BAD_REQUEST
+            )->send();
+            return;
+        }
+
+        // Verifica che i match non siano già stati generati
+        $existingGames = Game::all();
+        $gamesInCompetition = array_filter($existingGames, fn($g) => $g->competition_id == $id);
+        
+        if (count($gamesInCompetition) > 0) {
+            Response::error('I match sono già stati generati per questo torneo', Response::HTTP_BAD_REQUEST)->send();
+            return;
+        }
+
+        // Estrai gli ID dei team e randomizza
+        $teams = array_map(fn($ct) => $ct->team_id, $teamsInCompetition);
+        shuffle($teams); // RANDOMIZZAZIONE
+
+        // Genera match primo round (phase 1)
+        $firstRoundMatches = $competition->team_number / 2;
+        $createdGames = [];
+
+        // Trova la fase di partenza
+        $phase = $competition->phases;
+
+        for ($i = 0; $i < $firstRoundMatches; $i++) {
+            $homeTeam = $teams[$i * 2];
+            $awayTeam = $teams[$i * 2 + 1];
+            $position = $i + 1;
+
+            $game = Game::create([
+                'competition_id' => $id,
+                'home_team' => $homeTeam,
+                'away_team' => $awayTeam,
+                'phase' => $phase,
+                'result' => '0-0',
+                'winner' => null,
+                "position" => $position
+            ]);
+
+            $createdGames[] = $game;
+        }
+
+        Response::success(
+            $createdGames, 
+            Response::HTTP_CREATED, 
+            "Torneo avviato! Generati {$firstRoundMatches} match del primo turno"
+        )->send();
+
+    } catch (\Exception $e) {
+        Response::error('Errore durante l\'avvio del torneo: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
     }
 });
 
@@ -79,6 +160,9 @@ Router::match(['put', 'patch'], '/competitions/{id}', function ($id) {
             Response::error('Errore di validazione', Response::HTTP_BAD_REQUEST, $errors)->send();
             return;
         }
+
+        $phases = log($data['team_number'], 2);
+        $data['phases'] = $phases;
 
         $competition->update($data);
 
@@ -119,7 +203,7 @@ Router::get('/competitions/{id}/games', function ($id) {
         }
 
         $allGames = Game::all();
-        $games = array_filter($allGames, fn($game) => $game['competition_ref'] == $id);
+        $games = array_filter($allGames, fn($game) => $game['competition_ref'] === $id);
 
         Response::success(array_values($games))->send();
     } catch (\Exception $e) {
