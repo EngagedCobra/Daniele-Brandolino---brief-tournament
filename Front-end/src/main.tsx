@@ -3,11 +3,12 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
+import MainLayout from "./layouts/MainLayout";
+import HomePage from "./pages/HomePage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
-import MainLayout from "./layouts/MainLayout";
-import HomePage from "./pages/HomePage";
+import TeamOps from "./features/teams/TeamList";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       }
     ]
   },
+  {
+    path: '/teams',
+    element: <TeamOps/>
+  }
 ])
 
 const queryClient = new QueryClient()
