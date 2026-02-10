@@ -11,7 +11,6 @@ class Game extends BaseModel
     use WithValidate;
     use HasRelations;
 
-    //* active recors --> intanto creiamo l'istanza, poi la popoliamo, per questo settiamo tutto come null
     public ?int $competition_id = null;
     public ?int $away_team = null;
     public ?int $home_team = null;

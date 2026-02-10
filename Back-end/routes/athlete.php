@@ -16,7 +16,7 @@ Router::get('/athletes', function () {
         $team_id = $request->getParam('team_id');
 
         if ($team_id !== null) {
-            $athletes = Athlete::where('team_ref', '=', $team_id);
+            $athletes = Athlete::where('team_id', '=', $team_id);
         } else {
             $athletes = Athlete::all();
         }
@@ -26,6 +26,27 @@ Router::get('/athletes', function () {
         Response::error('Errore nel recupero della lista atleti: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
     }
 });
+
+/**
+ * GET /api/athletes/?team_id={id} - Atleti di un team
+ */
+/* Router::get('/athletes?team_id={id}') {
+  try {
+    $request = new Request();
+    $team_id = $request->getParam('team_id');
+
+    if ($team_id !== null) {
+      $athletes = Athlete::where('team_ref', '=', $team_id);
+    } else {
+      $athletes = Athlete::all();
+    }
+
+    Response::success($athletes)->send();
+
+  } catch (\Exception $e) {
+    Response::error('Errore nel recupero della lista atleti: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
+  }
+} */
 
 /**
  * GET /api/athletes/{id} - Dettaglio atleta
@@ -57,6 +78,11 @@ Router::post('/athletes', function () {
         if (!empty($errors)) {
             Response::error('Errore di validazione', Response::HTTP_BAD_REQUEST, $errors)->send();
             return;
+        }
+
+        $athletes = Athlete::where("team_id", "=", $data['team_id']);
+        if (count($athletes) >= 5) {
+          Response::error('Squadra al completo', Response::HTTP_METHOD_NOT_ALLOWED)->send();
         }
 
         $athlete = Athlete::create($data);

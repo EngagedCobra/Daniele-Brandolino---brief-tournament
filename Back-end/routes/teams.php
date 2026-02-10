@@ -103,7 +103,11 @@ Router::delete('/teams/{id}', function ($id) {
 
         $team->delete();
 
-        Response::success(null, Response::HTTP_OK, "Team eliminato con successo")->send();
+        $athletes = Athlete::where("team_id", "=", $id);
+        foreach($athletes as $athlete) {
+          $athlete->delete();
+        }
+        Response::success(null, Response::HTTP_OK, "Team e giocatori eliminati con successo")->send();
     } catch (\Exception $e) {
         Response::error('Errore durante l\'eliminazione del team: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
     }

@@ -5,5 +5,6 @@ export type Athlete = {
     name: string;
     surname: string;
     age: number;
-    team_id: Team;
+    team_id: number;
+    team: Team;
 }

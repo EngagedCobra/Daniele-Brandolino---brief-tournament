@@ -11,7 +11,6 @@ class Competition extends BaseModel
     use WithValidate;
     use HasRelations;
 
-    //* active recors --> intanto creiamo l'istanza, poi la popoliamo, per questo settiamo tutto come null
     public ?string $name = null;
     public ?int $team_number = null;
     public ?int $phases = null;

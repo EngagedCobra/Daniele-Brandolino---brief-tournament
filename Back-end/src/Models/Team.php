@@ -11,7 +11,6 @@ class Team extends BaseModel
     use WithValidate;
     use HasRelations;
 
-    //* active recors --> intanto creiamo l'istanza, poi la popoliamo, per questo settiamo tutto come null
     public ?string $name = null;
     public ?string $logo = null;
 

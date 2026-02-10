@@ -11,7 +11,6 @@ class Athlete extends BaseModel
     use WithValidate;
     use HasRelations;
 
-    //* active recors --> intanto creiamo l'istanza, poi la popoliamo, per questo settiamo tutto come null
     public ?string $name = null;
     public ?string $surname = null;
     public ?int $age = null;
