@@ -11,6 +11,7 @@ const HomePage = () => {
             <Button
                 variant={'secondary'}
                 className='w-full after:absolute after:inset-0 shrink'
+                nativeButton={false}
                 render={<Link to={'/teams'} />}
             >
                 Visualizza squadre

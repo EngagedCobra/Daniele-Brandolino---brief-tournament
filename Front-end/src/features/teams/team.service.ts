@@ -8,4 +8,12 @@ export class TeamService {
         const categories = await myFetch<Team[]>(`${myEnv.backendApiUrl}/teams`);
         return categories;
     }
+
+    static async update({ id, data }: { id: number, data: Omit<Partial<Team>, 'id'> }): Promise<Team> {
+        const team = await myFetch<Team>(`${myEnv.backendApiUrl}/teams/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        })
+        return team;
+    }
 }
