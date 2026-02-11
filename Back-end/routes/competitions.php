@@ -202,8 +202,7 @@ Router::get('/competitions/{id}/games', function ($id) {
             return;
         }
 
-        $allGames = Game::all();
-        $games = array_filter($allGames, fn($game) => $game['competition_ref'] === $id);
+        $games = Game::where("competition_id", "=", $id);
 
         Response::success(array_values($games))->send();
     } catch (\Exception $e) {

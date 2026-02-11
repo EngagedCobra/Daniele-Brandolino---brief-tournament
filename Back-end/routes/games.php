@@ -133,8 +133,11 @@ Router::match(['put', 'patch'], '/games/{id}', function ($id) {
                 Response::error("Competizione non trovata", Response::HTTP_NOT_FOUND)->send();
             }
             else {
+                // Aggiorno il vincitore
                 DB::update("UPDATE competitions SET winner = :winner WHERE id = :id", ['winner' => $winner, 'id' => $game->competition_id]);
                 $successMessages[] = "Torneo concluso; il vincitore è $winner";
+                // Tolgo le righe dalla tabella pivot
+                DB::delete("DELETE FROM competition_teams WHERE competition_id = " . $game->competition_id . "");
             }
         }
         // Se non lo è creo/aggiorno la partita successiva
@@ -142,7 +145,7 @@ Router::match(['put', 'patch'], '/games/{id}', function ($id) {
             $newPosition = ceil($game->position / 2);
 
             // Creazione/aggiornamento della partita successiva
-            $nextGame = Game::where("phase", "=", $game->phase - 1);
+            $nextGame = DB::select("SELECT * FROM games WHERE phase = " . $game->phase - 1 . " AND competition_id = " . $game->competition_id . " AND position = " . $newPosition);
             if (count($nextGame) === 0) {
                 Game::create([
                     "competition_id" => $game->competition_id,
@@ -157,36 +160,17 @@ Router::match(['put', 'patch'], '/games/{id}', function ($id) {
             } else {
                 // Controllo la presenza delle squadre della partita nella prossima fase nella posizione di riferimento
                 foreach ($nextGame as $g) {
-                    if (($g->away_team == null || !isset($g->away_team)) && $g->position == $newPosition) {
-                        DB::update("UPDATE games SET away_team = :team WHERE id = :id", ['team' => $winner, 'id' => $g->id]);
-                        $successMessages[] = "Prossima partita aggiornata; $winner VS " .  $g->home_team;
+                    if (($g['away_team'] == null || !isset($g['away_team'])) && $g['position'] == $newPosition) {
+                        DB::update("UPDATE games SET away_team = :team WHERE id = :id", ['team' => $winner, 'id' => $g['id']]);
+                        $successMessages[] = "Prossima partita aggiornata; $winner VS " .  $g['home_team'];
                         break;
                     }
                 }
             }
         }
 
-        Response::success(['data' => $updatedGame, 'messages' => $successMessages], Response::HTTP_OK, "Tutto andato a buon fine")->send();
+        Response::success(['messages' => $successMessages], Response::HTTP_OK, "Tutto andato a buon fine")->send();
     } catch (\Exception $e) {
         Response::error('Errore durante l\'aggiornamento del risultato: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
-    }
-});
-
-/**
- * DELETE /api/games/{id} - Elimina partita
- */
-Router::delete('/games/{id}', function ($id) {
-    try {
-        $game = Game::find($id);
-        if ($game === null) {
-            Response::error('Partita non trovata', Response::HTTP_NOT_FOUND)->send();
-            return;
-        }
-
-        $game->delete();
-
-        Response::success(null, Response::HTTP_OK, "Partita eliminata con successo")->send();
-    } catch (\Exception $e) {
-        Response::error('Errore durante l\'eliminazione della partita: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
     }
 });

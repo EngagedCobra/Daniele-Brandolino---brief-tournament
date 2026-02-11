@@ -6,7 +6,7 @@ const MainLayout = () => {
 
     return (
       <>
-        <header className="px-4 w-full max-w-4xl mx-auto">
+        <header className="px-4 w-full max-w-3xl mx-auto">
           <div className="p-2 mt-4 border rounded-2xl flex items-center justify-evenly">
             <Button
               variant={"secondary"}
@@ -23,14 +23,6 @@ const MainLayout = () => {
               render={<Link to={`/competitions`} />}
             >
               Tornei
-            </Button>
-            <Button
-              variant={"secondary"}
-              className="shrink"
-              nativeButton={false}
-              render={<Link to={`/athletes`} />}
-            >
-              Atleti
             </Button>
             <Button
               variant={"secondary"}

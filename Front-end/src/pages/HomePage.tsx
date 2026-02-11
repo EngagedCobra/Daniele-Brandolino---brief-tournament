@@ -1,33 +1,15 @@
-import { ArrowRight } from "lucide-react";
-import { Link } from "react-router";
-import { Badge } from "@/components/ui/badge";
-import { Button, MotionButton } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import HomeLink from "@/components/HomeLink";
+import { Link } from 'react-router'
 
 const HomePage = () => {
-  return (
-    <>
-      <div className="w-full max-w-4xl mx-auto mt-8 px-4 pb-4">
-        <h1 className="font-bold text-center text-4xl mb-8">
-          Tournament manager
-        </h1>
-        <div className="grid grid-cols-2 gap-8">
-          <HomeLink link="competitions/" text="TORNEI"></HomeLink>
-          <HomeLink link="teams/" text="SQUADRE"></HomeLink>
-          <HomeLink link="athletes/" text="ATLETI"></HomeLink>
-          <HomeLink link="past-competitions/" text="STORICO"></HomeLink>
+    return (
+        <div className='w-full max-w-3xl mx-auto'>
+            <h1 className='text-4xl font-bold text-center mt-8'>Tournament Manager</h1>
+            <div className='grid grid-cols-2 gap-5 mt-16'>
+                <Link to={"/competitions"} className='h-40 bg-blue-400 text-white font-3xl rounded-2xl flex justify-center items-center hover:bg-blue-300 transition-all duration-300'>TORNEI</Link>
+                <Link to={"/teams"} className='h-40 bg-blue-400 text-white font-3xl rounded-2xl flex justify-center items-center hover:bg-blue-300 transition-all duration-300'>SQUADRE</Link>
+            </div>
         </div>
-      </div>
-    </>
-  );
-};
+    )
+}
 
-export default HomePage;
+export default HomePage

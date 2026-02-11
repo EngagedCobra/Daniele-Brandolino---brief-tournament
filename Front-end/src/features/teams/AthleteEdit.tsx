@@ -15,15 +15,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { AthleteService } from "../athletes/athlete.service";
+import { updateAthleteSchema, type updateAthleteSchemUpdateAthleteDataa } from "../athletes/athlete.type";
 
-const athleteSchema = z.object({
-  name: z.string().min(1),
-  surname: z.string().min(1),
-  age: z.coerce.number().int().min(18).max(60),
-  team_id: z.coerce.number().int().min(1),
-});
 
-type AthleteData = z.infer<typeof athleteSchema>;
 
 type AthleteEditProps = {
   id: number,
@@ -37,7 +31,7 @@ const AthleteEdit = ({id, updating, creating}: AthleteEditProps) => {
   const [selectedAthlete, setSelectedAthlete] = useState();
 
   const athleteForm = useForm({
-    resolver: zodResolver(athleteSchema),
+    resolver: zodResolver(updateAthleteSchema),
   });
 
     const queryClient = useQueryClient();
@@ -75,11 +69,11 @@ const AthleteEdit = ({id, updating, creating}: AthleteEditProps) => {
           }),
       });
     
-      const handleAthleteCreate = (data: AthleteData) => {
+      const handleAthleteCreate = (data: updateAthleteSchemUpdateAthleteDataa) => {
         createAthleteMutation.mutate(data);
       };
     
-      const handleAthleteUpdate = (data: AthleteData) => {
+      const handleAthleteUpdate = (data: updateAthleteSchemUpdateAthleteDataa) => {
         updateAthleteMutation.mutate({ id: id, data });
       };
     

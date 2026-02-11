@@ -29,4 +29,7 @@ export class TeamService {
     })
     return team
   }
+  static async delete(id:number): Promise<void> {
+    await myFetch<null>(`${myEnv.backendApiUrl}/teams/${id}`, { method: 'DELETE' });
+  }
 }

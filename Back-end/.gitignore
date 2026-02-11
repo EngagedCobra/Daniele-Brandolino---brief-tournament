@@ -25,6 +25,9 @@ logs/
 # Database JSON (se usato)
 db.json
 
+# Database settings
+database.php
+
 # File temporanei
 *.tmp
 *.cache

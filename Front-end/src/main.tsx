@@ -1,21 +1,23 @@
-import { TanStackDevtools } from "@tanstack/react-devtools";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "./index.css";
 import MainLayout from "./layouts/MainLayout";
+import Competition from "./pages/Competition";
+import CompetitionGames from "./pages/CompetitionGames";
+import CompetitionHistory from "./pages/CompetitionHistory";
+import Competitions from "./pages/Competitions";
 import HomePage from "./pages/HomePage";
 import Team from "./pages/Team";
 import Teams from "./pages/Teams";
-import Competitions from "./pages/Competitions";
-import Competition from "./pages/Competition";
 
 const router = createBrowserRouter([
   {
     path: "/",
+    element: <MainLayout />,
     children: [
       {
         index: true,
@@ -49,6 +51,20 @@ const router = createBrowserRouter([
         path: "/competitions/:id",
         element: <Competition />,
       },
+      {
+        path: "/competitions/:id/games",
+        element: <CompetitionGames />,
+      },
+    ],
+  },
+  {
+    path: "/past-competitions",
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: <CompetitionHistory />,
+      }
     ],
   },
 ]);
@@ -67,7 +83,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
-      <TanStackDevtools
+      {/*       <TanStackDevtools
         config={{ position: "middle-left" }}
         plugins={[
           {
@@ -76,7 +92,7 @@ createRoot(document.getElementById("root")!).render(
             defaultOpen: false,
           },
         ]}
-      />
+      /> */}
     </QueryClientProvider>
   </StrictMode>,
 );

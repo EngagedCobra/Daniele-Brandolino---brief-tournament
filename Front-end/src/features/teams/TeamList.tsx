@@ -31,26 +31,20 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import z from "zod";
 import { AthleteService } from "../athletes/athlete.service";
+import { createAthleteSchema, type CreateAthleteData } from "../athletes/athlete.type";
 import { TeamService } from "./team.service";
 import type { Team } from "./team.type";
+import CustomEmpty from "@/components/customEmpty";
 
-const nameSchema = z.object({
-  name: z.string().min(1),
-});
-
-const athleteSchema = z.object({
-  name: z.string().min(1),
-  surname: z.string().min(1),
-  age: z.coerce.number().int().min(18).max(60),
-  team_id: z.coerce.number().int().min(1),
+const updateTeamSchema = z.object({
+  name: z.string().min(1, "Il nome è obbligatorio").max(50, "Il nome è troppo lungo").trim(),
 });
 
 const createTeamSchema = z.object({
-  name: z.string().min(1)
+  name: z.string().min(1, "Il nome è obbligatorio").max(50, "Il nome è troppo lungo").trim(),
 })
 
-type NameData = z.infer<typeof nameSchema>;
-type AthleteData = z.infer<typeof athleteSchema>;
+type UpdateTeamSchema = z.infer<typeof updateTeamSchema>;
 type TeamData = z.infer<typeof createTeamSchema>;
 
 const TeamList = () => {
@@ -60,14 +54,13 @@ const TeamList = () => {
   const [isTeamCreateDialogOpen, setTeamCreateDialogOpen] = useState(false);
 
   const teamForm = useForm({
-    resolver: zodResolver(nameSchema),
+    resolver: zodResolver(updateTeamSchema),
   });
   const teamCreateForm = useForm({
     resolver: zodResolver(createTeamSchema)
   })
-  const athleteForm = useForm({
-    resolver: zodResolver(athleteSchema),
-/*     defaultValues: {team_id: selectedTeam?.id} */
+  const createAthleteForm = useForm({
+    resolver: zodResolver(createAthleteSchema),
   });
 
   const queryClient = useQueryClient();
@@ -88,13 +81,13 @@ const TeamList = () => {
 
   const updateTeamMutation = useMutation({
     mutationFn: TeamService.update,
-    onSuccess: () =>{
+    onSuccess: () => {
       (queryClient.invalidateQueries({
         queryKey: ["teams"],
       }),
         setTeamDialogOpen(false));
     }
-      
+
   });
 
   const createAthleteMutation = useMutation({
@@ -111,13 +104,17 @@ const TeamList = () => {
     },
   });
 
-  const handleTeamUpdate = (data: NameData) => {
+  const handleTeamUpdate = (data: UpdateTeamSchema) => {
     if (!selectedTeam) return;
     updateTeamMutation.mutate({ id: selectedTeam.id, data });
   };
 
-  const handleAthleteCreate = (data: AthleteData) => {
+  const handleAthleteCreate = (data: CreateAthleteData) => {
     if (!selectedTeam) return;
+    data = {
+      ...data,
+      team_id: selectedTeam.id
+    }
     createAthleteMutation.mutate(data);
   };
 
@@ -137,40 +134,174 @@ const TeamList = () => {
 
   if (isPending) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Loader2 className="animate-spin" />
-          </EmptyMedia>
-          <EmptyTitle>Caricamento...</EmptyTitle>
-          <EmptyDescription>
-            Attendi mentre vengono caricate le squadre
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <CustomEmpty title="Caricamento..." message="Attendi mentre vengono caricate le squadre" icon={<Loader2 className="animate-spin" />} />
     );
   }
 
   if (isError) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <OctagonAlert />
-          </EmptyMedia>
-          <EmptyTitle>Errore imprevisto</EmptyTitle>
-          <EmptyDescription>{error.message}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button onClick={() => refetch()}>Riprova</Button>
-        </EmptyContent>
-      </Empty>
+      <CustomEmpty title="Errore imprevisto" message={error.message} icon={<OctagonAlert />} />
     );
   }
 
   return (
     <>
-      <div className="max-w-[1240px] mx-auto mt-6">
+      <div className="max-w-3xl mx-auto mt-6">
+        {/* TeamCreate Dialog */}
+        <Dialog
+          open={isTeamCreateDialogOpen}
+          onOpenChange={setTeamCreateDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nuovo Team</DialogTitle>
+              <form onSubmit={teamCreateForm.handleSubmit(handleTeamCreate)}>
+                <FieldSet className="w-full max-w-xs">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel htmlFor="team-name" className="mt-4">
+                        Scegli il nuovo nome del team
+                      </FieldLabel>
+                      <Input
+                        id="team-name"
+                        type="text"
+                        {...teamCreateForm.register("name")}
+                      />
+                    </Field>
+                  </FieldGroup>
+                </FieldSet>
+                <Button type="submit" className={"mt-4"}>
+                  Crea team
+                </Button>
+              </form>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+        {/* TeamEdit Dialog */}
+        <Dialog
+          open={isTeamDialogOpen}
+          onOpenChange={setTeamDialogOpen}
+        >
+          <DialogTrigger asChild className="px-4 py-2 rounded-2xl hover:cursor-pointer">
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifica Team</DialogTitle>
+              <form
+                onSubmit={teamForm.handleSubmit(handleTeamUpdate)}
+              >
+                <FieldSet className="w-full max-w-xs">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel
+                        htmlFor="team-name"
+                        className="mt-4"
+                      >
+                        Scegli il nuovo nome del team
+                      </FieldLabel>
+                      <Input
+                        id="team-name"
+                        type="text"
+                        disabled={!selectedTeam}
+                        {...teamForm.register("name")}
+                      />
+                    </Field>
+                  </FieldGroup>
+                </FieldSet>
+                <Button type="submit" className={"mt-4"}>
+                  Salva
+                </Button>
+              </form>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+        {/* AthleteAdd Dialog */}
+        <Dialog
+          open={isAthleteDialogOpen}
+          onOpenChange={setAthleteDialogOpen}
+        >
+          <DialogTrigger asChild className="px-4 py-2 rounded-2xl hover:cursor-pointer">
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Aggiungi atleta</DialogTitle>
+              <form
+                onSubmit={createAthleteForm.handleSubmit(
+                  handleAthleteCreate,
+                )}
+              >
+                <FieldSet className="w-full max-w-xs">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel
+                        htmlFor="athlete-name"
+                        className="mt-4"
+                      >
+                        Nome
+                      </FieldLabel>
+                      <Input
+                        id="athlete-name"
+                        type="text"
+                        disabled={!selectedTeam}
+                        {...createAthleteForm.register("name")}
+                      />
+                    </Field>
+                  </FieldGroup>
+                </FieldSet>
+                <FieldSet className="w-full max-w-xs">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel
+                        htmlFor="athlete-surname"
+                        className="mt-4"
+                      >
+                        Cognome
+                      </FieldLabel>
+                      <Input
+                        id="athlete-surname"
+                        type="text"
+                        disabled={!selectedTeam}
+                        {...createAthleteForm.register("surname")}
+                      />
+                    </Field>
+                  </FieldGroup>
+                </FieldSet>
+                <FieldSet className="w-full max-w-xs">
+                  <FieldGroup>
+                    <Field>
+                      <FieldLabel
+                        htmlFor="athlete-age"
+                        className="mt-4"
+                      >
+                        Età
+                      </FieldLabel>
+                      <Input
+                        id="athlete-age"
+                        type="number"
+                        disabled={!selectedTeam}
+                        {...createAthleteForm.register("age")}
+                      />
+                    </Field>
+                  </FieldGroup>
+                </FieldSet>
+                <FieldSet className="w-full max-w-xs hidden">
+                  <FieldGroup>
+                    <Field>
+                      <Input
+                        value={selectedTeam?.id}
+                        type="number"
+                        {...createAthleteForm.register("team_id")}
+                      />
+                    </Field>
+                  </FieldGroup>
+                </FieldSet>
+                <Button type="submit" className={"mt-4"}>
+                  Salva
+                </Button>
+              </form>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
         {teams.map((team) => {
           return (
             <>
@@ -182,142 +313,17 @@ const TeamList = () => {
                   <ItemTitle>{team.name}</ItemTitle>
                 </ItemContent>
                 <ItemActions>
-                  <Dialog
-                    open={isTeamDialogOpen}
-                    onOpenChange={setTeamDialogOpen}
-                  >
-                    <DialogTrigger
-                      onClick={() => setSelectedTeam(team)}
-                      className="bg-blue-300 px-4 py-2 rounded-2xl text-white"
-                    >
-                      Modifica Team
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Modifica Team</DialogTitle>
-                        <form
-                          onSubmit={teamForm.handleSubmit(handleTeamUpdate)}
-                        >
-                          <FieldSet className="w-full max-w-xs">
-                            <FieldGroup>
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="team-name"
-                                  className="mt-4"
-                                >
-                                  Scegli il nuovo nome del team
-                                </FieldLabel>
-                                <Input
-                                  id="team-name"
-                                  type="text"
-                                  disabled={!selectedTeam}
-                                  {...teamForm.register("name")}
-                                />
-                              </Field>
-                            </FieldGroup>
-                          </FieldSet>
-                          <Button type="submit" className={"mt-4"}>
-                            Salva
-                          </Button>
-                        </form>
-                      </DialogHeader>
-                    </DialogContent>
-                  </Dialog>
-                  {/* <AthleteEdit id={team.id} updating creating={undefined}></AthleteEdit> */}
-                  <Dialog
-                    open={isAthleteDialogOpen}
-                    onOpenChange={setAthleteDialogOpen}
-                  >
-                    <DialogTrigger
-                      onClick={() => setSelectedTeam(team)}
-                      className="bg-blue-300 px-4 py-2 rounded-2xl text-white"
-                    >
-                      Aggiungi atleta
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Aggiungi atleta</DialogTitle>
-                        <form
-                          onSubmit={athleteForm.handleSubmit(
-                            handleAthleteCreate,
-                          )}
-                        >
-                          <FieldSet className="w-full max-w-xs">
-                            <FieldGroup>
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="athlete-name"
-                                  className="mt-4"
-                                >
-                                  Nome
-                                </FieldLabel>
-                                <Input
-                                  id="athlete-name"
-                                  type="text"
-                                  disabled={!selectedTeam}
-                                  {...athleteForm.register("name")}
-                                />
-                              </Field>
-                            </FieldGroup>
-                          </FieldSet>
-                          <FieldSet className="w-full max-w-xs">
-                            <FieldGroup>
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="athlete-surname"
-                                  className="mt-4"
-                                >
-                                  Cognome
-                                </FieldLabel>
-                                <Input
-                                  id="athlete-surname"
-                                  type="text"
-                                  disabled={!selectedTeam}
-                                  {...athleteForm.register("surname")}
-                                />
-                              </Field>
-                            </FieldGroup>
-                          </FieldSet>
-                          <FieldSet className="w-full max-w-xs">
-                            <FieldGroup>
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="athlete-age"
-                                  className="mt-4"
-                                >
-                                  Età
-                                </FieldLabel>
-                                <Input
-                                  id="athlete-age"
-                                  type="number"
-                                  disabled={!selectedTeam}
-                                  {...athleteForm.register("age")}
-                                />
-                              </Field>
-                            </FieldGroup>
-                          </FieldSet>
-                          <FieldSet className="w-full max-w-xs hidden">
-                            <FieldGroup>
-                              <Field>
-                                <Input
-                                  id="athlete-team-id"
-                                  type="number"
-                                  value={team.id}
-                                  disabled={!selectedTeam}
-                                  {...athleteForm.register("team_id")}
-                                />
-                              </Field>
-                            </FieldGroup>
-                          </FieldSet>
-                          <Button type="submit" className={"mt-4"}>
-                            Salva
-                          </Button>
-                        </form>
-                      </DialogHeader>
-                    </DialogContent>
-                  </Dialog>
+                  <Button variant={"secondary"} className={"w-full shrink"} onClick={() => {
+                    setSelectedTeam(team)
+                    setTeamDialogOpen(true)
+                  }}
+                  >Modifica team</Button>
+                  <Button variant={"secondary"} className={"w-full shrink"} onClick={() => {
+                    setSelectedTeam(team)
+                    setAthleteDialogOpen(true)
+                  }}
+                  >Aggiungi Atleta</Button>
                   <Button
-                    variant={"secondary"}
                     className="w-full shrink"
                     nativeButton={false}
                     render={<Link to={`/teams/${team.id}`} />}
@@ -330,39 +336,11 @@ const TeamList = () => {
             </>
           );
         })}
-        <div className="flex justify-center mt-8">
-          <Dialog
-            open={isTeamCreateDialogOpen}
-            onOpenChange={setTeamCreateDialogOpen}
-          >
-            <DialogTrigger className="bg-blue-300 px-4 py-2 rounded-2xl text-white">
-              Aggiungi nuovo Team
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nuovo Team</DialogTitle>
-                <form onSubmit={teamCreateForm.handleSubmit(handleTeamCreate)}>
-                  <FieldSet className="w-full max-w-xs">
-                    <FieldGroup>
-                      <Field>
-                        <FieldLabel htmlFor="team-name" className="mt-4">
-                          Scegli il nuovo nome del team
-                        </FieldLabel>
-                        <Input
-                          id="team-name"
-                          type="text"
-                          {...teamCreateForm.register("name")}
-                        />
-                      </Field>
-                    </FieldGroup>
-                  </FieldSet>
-                  <Button type="submit" className={"mt-4"}>
-                    Crea team
-                  </Button>
-                </form>
-              </DialogHeader>
-            </DialogContent>
-          </Dialog>
+        <div className="flex justify-center my-8">
+          <Button className={"px-4 py-2 rounded-2xl"} onClick={() => {
+            setTeamCreateDialogOpen(true)
+          }}
+          >Aggiungi Team</Button>
         </div>
       </div>
     </>

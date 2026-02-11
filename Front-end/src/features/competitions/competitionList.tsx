@@ -1,3 +1,4 @@
+import CustomEmpty from "@/components/customEmpty";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,14 +7,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +16,6 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
-import MainLayout from "@/layouts/MainLayout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Loader2, OctagonAlert, Trophy } from "lucide-react";
@@ -34,13 +26,10 @@ import z from "zod";
 import { CompetitionService } from "./competition.service";
 
 const createCompetitionSchema = z.object({
-  name: z.string().min(1, "Il nome è obbligatorio"),
-  team_number: z.coerce
-    .number()
-    .refine(
-      (val) => [4, 8, 16].includes(val),
-      "Il numero di squadre deve essere 4, 8 o 16",
-    ),
+  name: z.string().min(1, "Il nome è obbligatorio").max(50, "Il nome è troppo lungo").trim(),
+  team_number: z.coerce.number().refine(
+    (number) => [4, 8, 16].includes(number)
+  ),
 });
 
 type CompetitionData = z.infer<typeof createCompetitionSchema>;
@@ -52,7 +41,7 @@ const CompetitionList = () => {
     resolver: zodResolver(createCompetitionSchema),
     defaultValues: {
       name: "",
-      team_number: 8,
+
     },
   });
 
@@ -68,7 +57,8 @@ const CompetitionList = () => {
     queryKey: ["competitions"],
     queryFn: async () => {
       const res = await CompetitionService.list();
-      return res.sort((a, b) => b.id - a.id); // Più recenti prima
+      // Filtra solo competizioni in corso (senza vincitore)
+      return res.filter(c => !c.winner)
     },
   });
 
@@ -104,56 +94,28 @@ const CompetitionList = () => {
 
   if (isPending) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Loader2 className="animate-spin" />
-          </EmptyMedia>
-          <EmptyTitle>Caricamento...</EmptyTitle>
-          <EmptyDescription>
-            Attendi mentre vengono caricate le competizioni
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <CustomEmpty title="Caricamento..." linkText="Attendi mentre vengono caricate le competizioni" icon={<Loader2 className="animate-spin" />} ></CustomEmpty>
     );
   }
 
   if (isError) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <OctagonAlert />
-          </EmptyMedia>
-          <EmptyTitle>Errore imprevisto</EmptyTitle>
-          <EmptyDescription>{error.message}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button onClick={() => refetch()}>Riprova</Button>
-        </EmptyContent>
-      </Empty>
+      <CustomEmpty title="Errore imprevisto" icon={<OctagonAlert />} message={error.message} linkText="Riprova" link={refetch()}  ></CustomEmpty>
     );
   }
 
   return (
     <>
-      <div className="max-w-[1240px] mx-auto mt-6">
+      <div className="max-w-3xl mx-auto mt-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Trophy className="h-8 w-8" />
-            Competizioni
+            Competizioni in Corso
           </h1>
         </div>
 
         {competitions.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyTitle>Nessuna competizione</EmptyTitle>
-              <EmptyDescription>
-                Inizia creando la tua prima competizione
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <CustomEmpty title="Nessuna competizione in corso" message="Inizia creando la tua prima competizione"/>
         ) : (
           competitions.map((competition) => (
             <Item key={competition.id}>
@@ -161,11 +123,6 @@ const CompetitionList = () => {
                 <ItemTitle>{competition.name}</ItemTitle>
                 <ItemDescription>
                   {competition.team_number} squadre • {competition.phases} fasi
-                  {competition.winner && (
-                    <span className="ml-2 text-yellow-600 font-semibold">
-                      • Vincitore: Team #{competition.winner}
-                    </span>
-                  )}
                 </ItemDescription>
               </ItemContent>
               <ItemActions>
@@ -191,16 +148,21 @@ const CompetitionList = () => {
         )}
 
         <div className="flex justify-center mt-8">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger className="bg-blue-300 px-4 py-2 rounded-2xl text-white">
-              Crea nuova Competizione
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+          >
+            <DialogTrigger asChild className="px-4 py-2 rounded-2xl">
+              <Button>
+                Crea nuova competizione
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Nuova Competizione</DialogTitle>
                 <form
                   onSubmit={competitionForm.handleSubmit(
-                    handleCompetitionCreate,
+                    handleCompetitionCreate
                   )}
                 >
                   <FieldSet className="w-full max-w-xs">
@@ -223,7 +185,6 @@ const CompetitionList = () => {
                       </Field>
                     </FieldGroup>
                   </FieldSet>
-
                   <FieldSet className="w-full max-w-xs">
                     <FieldGroup>
                       <Field>
@@ -253,7 +214,6 @@ const CompetitionList = () => {
                       </Field>
                     </FieldGroup>
                   </FieldSet>
-
                   <Button
                     type="submit"
                     className="mt-4"

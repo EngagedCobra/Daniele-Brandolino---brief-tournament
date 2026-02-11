@@ -104,8 +104,8 @@ Router::delete('/teams/{id}', function ($id) {
         $team->delete();
 
         $athletes = Athlete::where("team_id", "=", $id);
-        foreach($athletes as $athlete) {
-          $athlete->delete();
+        foreach ($athletes as $athlete) {
+            $athlete->delete();
         }
         Response::success(null, Response::HTTP_OK, "Team e giocatori eliminati con successo")->send();
     } catch (\Exception $e) {
@@ -148,7 +148,7 @@ Router::get('/teams/{id}/competitions', function ($id) {
         // Trova tutte le associazioni per questo team
         $allCompetitionTeams = CompetitionTeam::all();
         $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct['team_id'] === $id);
-        
+
         // Recupera le competizioni
         $competitions = [];
         foreach ($filtered as $ct) {

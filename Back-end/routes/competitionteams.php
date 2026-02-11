@@ -2,6 +2,7 @@
 
 /* Routes per gestione competition_teams (tabella pivot) */
 
+use App\Database\DB;
 use App\Models\CompetitionTeam;
 use App\Models\Competition;
 use App\Models\Team;
@@ -23,7 +24,7 @@ Router::get('/teams/{team_id}/competitions', function ($team_id) {
         // Trova tutte le associazioni per questo team
         $allCompetitionTeams = CompetitionTeam::all();
         $filtered = array_filter($allCompetitionTeams, fn($ct) => $ct->team_id == $team_id);
-        
+
         // Recupera le competizioni
         $competitions = [];
         foreach ($filtered as $ct) {
@@ -52,7 +53,7 @@ Router::get('/competitions/{competition_id}/teams', function ($competition_id) {
 
         // Trova tutte le associazioni per questa competizione
         $allCompetitionTeams = CompetitionTeam::where("competition_id", "=", $competition_id);
-        
+
         // Recupera i teams
         $teams = [];
         foreach ($allCompetitionTeams as $ct) {
@@ -163,36 +164,21 @@ Router::post('/teams/{team_id}/competitions', function ($team_id) {
  */
 Router::delete('/competitions/{competition_id}/teams/{team_id}', function ($competition_id, $team_id) {
     try {
-        $competition = Competition::find($competition_id);
-        if ($competition === null) {
-            Response::error('Competizione non trovata', Response::HTTP_NOT_FOUND)->send();
-            return;
-        }
+        $competition = CompetitionTeam::where("competition_id", "=", $competition_id);
+        $competitionTeam = null;
 
-        $team = Team::find($team_id);
-        if ($team === null) {
-            Response::error('Team non trovato', Response::HTTP_NOT_FOUND)->send();
-            return;
-        }
-
-        // Trova l'associazione
-        $competitionTeams = CompetitionTeam::all();
-        $found = null;
-
-        foreach ($competitionTeams as $ct) {
-            if ($ct['competition_id'] == $competition_id && $ct['team_id'] == $team_id) {
-                $found = $ct;
+        foreach ($competition as $ct) {
+            if ($ct->team_id == $team_id) {
+                $competitionTeam = $ct;
                 break;
             }
         }
-
-        if ($found === null) {
+        if ($competitionTeam === null) {
             Response::error('Associazione non trovata', Response::HTTP_NOT_FOUND)->send();
             return;
         }
 
-        // Elimina l'associazione (implementa secondo il tuo ORM)
-        // CompetitionTeam::deleteAssociation($competition_id, $team_id);
+        DB::delete("DELETE FROM competition_teams WHERE competition_id = " . $competition_id . " AND team_id = " . $team_id);
 
         Response::success(null, Response::HTTP_OK, "Team rimosso dalla competizione con successo")->send();
     } catch (\Exception $e) {
@@ -201,43 +187,28 @@ Router::delete('/competitions/{competition_id}/teams/{team_id}', function ($comp
 });
 
 /**
- * DELETE /api/teams/{team_id}/competitions/{competition_id} - Rimuovi competizione da team
+ * DELETE /api/competitions/{competition_id}/teams - Rimuovi tutti i team da competizione
  */
-Router::delete('/teams/{team_id}/competitions/{competition_id}', function ($team_id, $competition_id) {
+/* Router::delete('/competitions/{competition_id}/teams', function ($competition_id, $team_id) {
     try {
-        $team = Team::find($team_id);
-        if ($team === null) {
-            Response::error('Team non trovato', Response::HTTP_NOT_FOUND)->send();
-            return;
-        }
+        $competition = CompetitionTeam::where("competition_id", "=", $competition_id);
+        $competitionTeam = null;
 
-        $competition = Competition::find($competition_id);
-        if ($competition === null) {
-            Response::error('Competizione non trovata', Response::HTTP_NOT_FOUND)->send();
-            return;
-        }
-
-        // Trova l'associazione
-        $competitionTeams = CompetitionTeam::all();
-        $found = null;
-
-        foreach ($competitionTeams as $ct) {
-            if ($ct['competition_id'] == $competition_id && $ct['team_id'] == $team_id) {
-                $found = $ct;
+        foreach ($competition as $ct) {
+            if ($ct->team_id == $team_id) {
+                $competitionTeam = $ct;
                 break;
             }
         }
-
-        if ($found === null) {
+        if ($competitionTeam === null) {
             Response::error('Associazione non trovata', Response::HTTP_NOT_FOUND)->send();
             return;
         }
 
-        // Elimina l'associazione (implementa secondo il tuo ORM)
-        // CompetitionTeam::deleteAssociation($competition_id, $team_id);
-
-        Response::success(null, Response::HTTP_OK, "Competizione rimossa dal team con successo")->send();
+        DB::delete("DELETE FROM competition_teams WHERE competition_id = " . $competition_id . " AND team_id = " . $team_id);
+        
+        Response::success(null, Response::HTTP_OK, "Team rimosso dalla competizione con successo")->send();
     } catch (\Exception $e) {
-        Response::error('Errore durante la rimozione della competizione dal team: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
+        Response::error('Errore durante la rimozione del team dalla competizione: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR)->send();
     }
-});
+}); */
