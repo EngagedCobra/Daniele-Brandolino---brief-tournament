@@ -46,6 +46,7 @@ type EditCompetitionData = z.infer<typeof editCompetitionSchema>;
 
 const SingleCompetition = () => {
   const { id } = useParams();
+
   const [isAddTeamDialogOpen, setAddTeamDialogOpen] = useState(false);
   const [isEditDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -132,7 +133,7 @@ const SingleCompetition = () => {
       queryClient.invalidateQueries({
         queryKey: ["competition-teams", id],
       });
-      setAddTeamDialogOpen(false);
+      if (canStart) setAddTeamDialogOpen(false)
     },
     onError: (error: Error) => {
       alert(error.message);
@@ -190,6 +191,13 @@ const SingleCompetition = () => {
   const canStart = isTeamsFull && !hasStarted;
   const canEdit = !hasStarted;
 
+  useEffect(() => {
+  if (canStart) {
+    setAddTeamDialogOpen(false);
+  }
+}, [competitionTeams, addTeamMutation.isSuccess]);
+
+
 
   // Teams disponibili da aggiungere (non già nella competizione)
   const availableTeams = allTeams.filter(
@@ -218,7 +226,6 @@ const SingleCompetition = () => {
   return (
     <>
       <div className="w-full max-w-3xl mx-auto mt-4">
-        {/* Header competizione */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold">{competition.name}</h1>
@@ -230,7 +237,6 @@ const SingleCompetition = () => {
               {competitionTeams.length}/{competition.team_number}
             </p>
           </div>
-
           <div className="flex gap-2">
             {canEdit && (
               <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -303,7 +309,7 @@ const SingleCompetition = () => {
             )}
           </div>
         </div>
-        <div className="mt-8">
+        <div className="my-8">
           <h2 className="text-2xl font-semibold mb-4">Squadre Partecipanti</h2>
           {competitionTeams.length === 0 ? (
             <CustomEmpty title="Nessuna squadra" message="Non ci sono squadre in questa competizione" />

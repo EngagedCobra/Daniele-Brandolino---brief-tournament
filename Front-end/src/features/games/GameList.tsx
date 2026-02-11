@@ -1,3 +1,4 @@
+import CustomEmpty from "@/components/customEmpty";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -5,31 +6,37 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, OctagonAlert, Trophy } from "lucide-react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router";
+import z from "zod";
 import { CompetitionService } from "../competitions/competition.service";
 import { TeamService } from "../teams/team.service";
 import { GameService } from "./games.service";
 import type { Game } from "./games.type";
-import CustomEmpty from "@/components/customEmpty";
+
+const gameSchema = z.object({
+  result: z.string().min(3, "Risultato non valido").max(5, "Risultato non valido"),
+})
+
+type GameData = z.infer<typeof gameSchema>
 
 const GameList = () => {
   const { id } = useParams(); // competition_id
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [isResultDialogOpen, setResultDialogOpen] = useState(false);
-  const [result, setResult] = useState("0-0");
+
+  const gameForm = useForm({
+    resolver: zodResolver(gameSchema),
+    defaultValues: {
+      result: "0-0"
+    }
+  })
 
   const queryClient = useQueryClient();
 
@@ -68,22 +75,23 @@ const GameList = () => {
       queryClient.invalidateQueries({ queryKey: ["competition", id] });
       setResultDialogOpen(false);
       setSelectedGame(null);
-      setResult("0-0");
+      gameForm.reset()
     },
   });
 
   const handleOpenResultDialog = (game: Game) => {
     setSelectedGame(game);
-    setResult(game.result);
     setResultDialogOpen(true);
   };
 
-  const handleSubmitResult = () => {
+  const handleSubmitResult = (data: GameData) => {
     if (!selectedGame) return
-    updateResultMutation.mutate({
-      gameId: selectedGame.id,
-      result
-    });
+    const [homeScore, awayScore] = data.result.split("-")
+    if (homeScore === awayScore) {
+      alert("La partita non può finire in pareggio!")
+      return
+    }
+    updateResultMutation.mutate({ result: data.result, gameId: selectedGame.id });
   };
 
   const getTeam = (teamId: number | null) => {
@@ -147,7 +155,7 @@ const GameList = () => {
           )}
         </div>
         {games.length === 0 ? (
-          <CustomEmpty title="Nessun match" message="Vai alla gestione squadre" link={`/competitions/${id}`}/>
+          <CustomEmpty title="Nessun match" message="Vai alla gestione squadre" link={`/competitions/${id}`} />
         ) : (
           <div className="my-8">
             {Object.keys(gamesByPhase)
@@ -169,12 +177,12 @@ const GameList = () => {
                           {/* Home Team */}
                           <div className="flex items-center justify-between mb-2">
                             {homeTeam ? (
-                              <Link 
+                              <Link
                                 to={`/teams/${homeTeam.id}`}
                                 className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded flex-1"
                               >
-                                <img 
-                                  src={homeTeam.logo} 
+                                <img
+                                  src={homeTeam.logo}
                                   className="w-10 h-10 rounded-full"
                                 />
                                 <span className="font-semibold">{homeTeam.name}</span>
@@ -198,12 +206,12 @@ const GameList = () => {
                           {/* Away Team */}
                           <div className="flex items-center justify-between mb-2">
                             {awayTeam ? (
-                              <Link 
+                              <Link
                                 to={`/teams/${awayTeam.id}`}
                                 className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded flex-1"
                               >
-                                <img 
-                                  src={awayTeam.logo} 
+                                <img
+                                  src={awayTeam.logo}
                                   className="w-10 h-10 rounded-full"
                                 />
                                 <span className="font-semibold">{awayTeam.name}</span>
@@ -261,39 +269,39 @@ const GameList = () => {
                       {getTeam(selectedGame.home_team)?.name} vs {getTeam(selectedGame.away_team)?.name}
                     </p>
                   </div>
+                  <form onSubmit={gameForm.handleSubmit(handleSubmitResult)}>
+                    <FieldSet className="w-full max-w-xs mx-auto">
+                      <FieldGroup>
+                        <Field>
+                          <FieldLabel htmlFor="result">Risultato (es. 3-1)</FieldLabel>
+                          <Input
+                            id="result"
+                            type="text"
+                            placeholder="3-1"
+                            pattern="\d{1,2}-\d{1,2}"
+                            {...gameForm.register("result")}
+                          />
+                        </Field>
+                      </FieldGroup>
+                    </FieldSet>
 
-                  <FieldSet className="w-full max-w-xs mx-auto">
-                    <FieldGroup>
-                      <Field>
-                        <FieldLabel htmlFor="result">Risultato (es. 3-1)</FieldLabel>
-                        <Input
-                          id="result"
-                          type="text"
-                          value={result}
-                          onChange={(e) => setResult(e.target.value)}
-                          placeholder="3-1"
-                          pattern="\d{1,2}-\d{1,2}"
-                        />
-                      </Field>
-                    </FieldGroup>
-                  </FieldSet>
-
-                  <div className="flex gap-2 mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => setResultDialogOpen(false)}
-                      className="flex-1"
-                    >
-                      Annulla
-                    </Button>
-                    <Button
-                      onClick={handleSubmitResult}
-                      disabled={updateResultMutation.isPending}
-                      className="flex-1"
-                    >
-                      {updateResultMutation.isPending ? "Salvataggio..." : "Salva"}
-                    </Button>
-                  </div>
+                    <div className="flex gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => setResultDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Annulla
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={updateResultMutation.isPending}
+                        className="flex-1"
+                      >
+                        {updateResultMutation.isPending ? "Salvataggio..." : "Salva"}
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               )}
             </DialogHeader>

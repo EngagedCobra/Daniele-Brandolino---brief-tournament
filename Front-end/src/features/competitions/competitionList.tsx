@@ -70,7 +70,7 @@ const CompetitionList = () => {
       });
       setCreateDialogOpen(false);
       competitionForm.reset();
-    },
+    }
   });
 
   const deleteCompetitionMutation = useMutation({

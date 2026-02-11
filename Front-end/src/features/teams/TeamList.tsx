@@ -93,7 +93,13 @@ const TeamList = () => {
   const createAthleteMutation = useMutation({
     mutationFn: AthleteService.create,
     onSuccess: () => setAthleteDialogOpen(false),
+    onError: () => {
+      alert("Team al completo")
+      setAthleteDialogOpen(false)
+      createAthleteForm.reset()
+    }
   });
+
   const createTeamMutation = useMutation({
     mutationFn: TeamService.create,
     onSuccess: () => {
@@ -101,7 +107,7 @@ const TeamList = () => {
         queryKey: ["teams"],
       }),
         setTeamCreateDialogOpen(false));
-    },
+    }
   });
 
   const handleTeamUpdate = (data: UpdateTeamSchema) => {
@@ -140,7 +146,7 @@ const TeamList = () => {
 
   if (isError) {
     return (
-      <CustomEmpty title="Errore imprevisto" message={error.message} icon={<OctagonAlert />} />
+      <CustomEmpty title="Errore imprevisto" message={error.message} icon={<OctagonAlert />} link={refetch()} />
     );
   }
 
