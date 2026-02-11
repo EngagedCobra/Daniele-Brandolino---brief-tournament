@@ -73,23 +73,8 @@ const CompetitionList = () => {
     }
   });
 
-  const deleteCompetitionMutation = useMutation({
-    mutationFn: CompetitionService.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["competitions"],
-      });
-    },
-  });
-
   const handleCompetitionCreate = (data: CompetitionData) => {
     createCompetitionMutation.mutate(data);
-  };
-
-  const handleCompetitionDelete = (id: number) => {
-    if (confirm("Sei sicuro di voler eliminare questa competizione?")) {
-      deleteCompetitionMutation.mutate(id);
-    }
   };
 
   if (isPending) {
@@ -126,13 +111,6 @@ const CompetitionList = () => {
                 </ItemDescription>
               </ItemContent>
               <ItemActions>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleCompetitionDelete(competition.id)}
-                  disabled={deleteCompetitionMutation.isPending}
-                >
-                  Elimina
-                </Button>
                 <Button
                   variant="secondary"
                   className="w-full shrink"
