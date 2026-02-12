@@ -4,7 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -21,10 +21,13 @@ import { GameService } from "./games.service";
 import type { Game } from "./games.type";
 
 const gameSchema = z.object({
-  result: z.string().min(3, "Risultato non valido").max(5, "Risultato non valido"),
-})
+  result: z
+    .string()
+    .min(3, "Risultato non valido")
+    .max(5, "Risultato non valido"),
+});
 
-type GameData = z.infer<typeof gameSchema>
+type GameData = z.infer<typeof gameSchema>;
 
 const GameList = () => {
   const { id } = useParams(); // competition_id
@@ -34,9 +37,9 @@ const GameList = () => {
   const gameForm = useForm({
     resolver: zodResolver(gameSchema),
     defaultValues: {
-      result: "0-0"
-    }
-  })
+      result: "0-0",
+    },
+  });
 
   const queryClient = useQueryClient();
 
@@ -52,10 +55,7 @@ const GameList = () => {
   });
 
   // Query games
-  const {
-    data: games = [],
-    isPending: isGamesPending,
-  } = useQuery({
+  const { data: games = [], isPending: isGamesPending } = useQuery({
     queryKey: ["competition-games", id],
     queryFn: () => GameService.getByCompetition(+id!),
   });
@@ -75,7 +75,7 @@ const GameList = () => {
       queryClient.invalidateQueries({ queryKey: ["competition", id] });
       setResultDialogOpen(false);
       setSelectedGame(null);
-      gameForm.reset()
+      gameForm.reset();
     },
   });
 
@@ -85,18 +85,21 @@ const GameList = () => {
   };
 
   const handleSubmitResult = (data: GameData) => {
-    if (!selectedGame) return
-    const [homeScore, awayScore] = data.result.split("-")
+    if (!selectedGame) return;
+    const [homeScore, awayScore] = data.result.split("-");
     if (homeScore === awayScore) {
-      alert("La partita non può finire in pareggio!")
-      return
+      alert("La partita non può finire in pareggio!");
+      return;
     }
-    updateResultMutation.mutate({ result: data.result, gameId: selectedGame.id });
+    updateResultMutation.mutate({
+      result: data.result,
+      gameId: selectedGame.id,
+    });
   };
 
   const getTeam = (teamId: number | null) => {
     if (!teamId) return null;
-    return allTeams.find(t => t.id === teamId);
+    return allTeams.find((t) => t.id === teamId);
   };
 
   const getPhaseLabel = (phase: number) => {
@@ -109,7 +112,7 @@ const GameList = () => {
 
   // Raggruppa games per fase
   const gamesByPhase: Record<number, Game[]> = {};
-  games.forEach(game => {
+  games.forEach((game) => {
     if (!gamesByPhase[game.phase]) {
       gamesByPhase[game.phase] = [];
     }
@@ -118,13 +121,21 @@ const GameList = () => {
 
   if (isCompetitionPending || isGamesPending) {
     return (
-      <CustomEmpty title="Caricamento..." message="Attendi mentre vengono caricati i match" icon={<Loader2 className="animate-spin" />} />
+      <CustomEmpty
+        title="Caricamento..."
+        message="Attendi mentre vengono caricati i match"
+        icon={<Loader2 className="animate-spin" />}
+      />
     );
   }
 
   if (isCompetitionError) {
     return (
-      <CustomEmpty title="errore imprevisto" message={competitionError.message} icon={<OctagonAlert />} />
+      <CustomEmpty
+        title="errore imprevisto"
+        message={competitionError.message}
+        icon={<OctagonAlert />}
+      />
     );
   }
 
@@ -150,30 +161,40 @@ const GameList = () => {
           </p>
           {competition.winner && (
             <p className="mt-2 text-yellow-600 font-semibold text-lg">
-              Vincitore: {getTeam(competition.winner)?.name || `Team #${competition.winner}`}
+              Vincitore:{" "}
+              {getTeam(competition.winner)?.name ||
+                `Team #${competition.winner}`}
             </p>
           )}
         </div>
         {games.length === 0 ? (
-          <CustomEmpty title="Nessun match" message="Vai alla gestione squadre" link={`/competitions/${id}`} />
+          <CustomEmpty
+            title="Nessun match"
+            message="Vai alla gestione squadre"
+            link={`/competitions/${id}`}
+          />
         ) : (
           <div className="my-8">
             {Object.keys(gamesByPhase)
               .map(Number)
               .sort((a, b) => a - b)
-              .map(phase => (
+              .map((phase) => (
                 <div key={phase}>
                   <h2 className="text-2xl font-semibold mb-4">
                     {getPhaseLabel(phase)}
                   </h2>
                   <div className="grid grid-cols-2 gap-4 mb-8">
-                    {gamesByPhase[phase].map(game => {
+                    {gamesByPhase[phase].map((game) => {
                       const homeTeam = getTeam(game.home_team);
                       const awayTeam = getTeam(game.away_team);
-                      const canEdit = game.home_team && game.away_team && !game.winner;
+                      const canEdit =
+                        game.home_team && game.away_team && !game.winner;
 
                       return (
-                        <div key={game.id} className="border rounded-lg p-4 bg-white shadow">
+                        <div
+                          key={game.id}
+                          className="border rounded-lg p-4 bg-white shadow"
+                        >
                           {/* Home Team */}
                           <div className="flex items-center justify-between mb-2">
                             {homeTeam ? (
@@ -185,12 +206,16 @@ const GameList = () => {
                                   src={homeTeam.logo}
                                   className="w-10 h-10 rounded-full"
                                 />
-                                <span className="font-semibold">{homeTeam.name}</span>
+                                <span className="font-semibold">
+                                  {homeTeam.name}
+                                </span>
                               </Link>
                             ) : (
                               <div className="flex items-center gap-3 p-2 flex-1">
                                 <div className="w-10 h-10 rounded-full bg-gray-200" />
-                                <span className="text-gray-400">In attesa...</span>
+                                <span className="text-gray-400">
+                                  In attesa...
+                                </span>
                               </div>
                             )}
                             {game.winner === game.home_team && (
@@ -214,12 +239,16 @@ const GameList = () => {
                                   src={awayTeam.logo}
                                   className="w-10 h-10 rounded-full"
                                 />
-                                <span className="font-semibold">{awayTeam.name}</span>
+                                <span className="font-semibold">
+                                  {awayTeam.name}
+                                </span>
                               </Link>
                             ) : (
                               <div className="flex items-center gap-3 p-2 flex-1">
                                 <div className="w-10 h-10 rounded-full bg-gray-200" />
-                                <span className="text-gray-400">In attesa...</span>
+                                <span className="text-gray-400">
+                                  In attesa...
+                                </span>
                               </div>
                             )}
                             {game.winner === game.away_team && (
@@ -266,14 +295,17 @@ const GameList = () => {
                 <div className="mt-4">
                   <div className="text-center mb-4">
                     <p className="font-semibold">
-                      {getTeam(selectedGame.home_team)?.name} vs {getTeam(selectedGame.away_team)?.name}
+                      {getTeam(selectedGame.home_team)?.name} vs{" "}
+                      {getTeam(selectedGame.away_team)?.name}
                     </p>
                   </div>
                   <form onSubmit={gameForm.handleSubmit(handleSubmitResult)}>
                     <FieldSet className="w-full max-w-xs mx-auto">
                       <FieldGroup>
                         <Field>
-                          <FieldLabel htmlFor="result">Risultato (es. 3-1)</FieldLabel>
+                          <FieldLabel htmlFor="result">
+                            Risultato (es. 3-1)
+                          </FieldLabel>
                           <Input
                             id="result"
                             type="text"
@@ -298,7 +330,9 @@ const GameList = () => {
                         disabled={updateResultMutation.isPending}
                         className="flex-1"
                       >
-                        {updateResultMutation.isPending ? "Salvataggio..." : "Salva"}
+                        {updateResultMutation.isPending
+                          ? "Salvataggio..."
+                          : "Salva"}
                       </Button>
                     </div>
                   </form>

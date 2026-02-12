@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/item";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, OctagonAlert, PencilIcon, Trash } from "lucide-react";
+import { Loader2, OctagonAlert, PencilIcon, PlusIcon, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router";
@@ -189,7 +189,8 @@ const SingleTeam = () => {
         </div>
       </div>
       <div className="flex justify-center">
-        <Button disabled={athletes.length === 5 ? true : false} onClick={() => setCreateAthleteDialogOpen(true)}>
+        <Button className={"rounded-2xl px-4 py-2"} disabled={athletes.length === 5 ? true : false} onClick={() => setCreateAthleteDialogOpen(true)}>
+          <PlusIcon />
           {athletes.length === 5 ? "Squadra al completo" : "Aggiungi atleta"}
         </Button>
       </div>

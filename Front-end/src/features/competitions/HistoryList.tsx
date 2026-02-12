@@ -42,7 +42,7 @@ const HistoryList = () => {
 
     if (isPending) {
         return (
-            <CustomEmpty title="Caricamento..." message="Attendi mentre vengono caricate le competizioni" icon={<Loader2 className="animate.spin" />} />
+            <CustomEmpty title="Caricamento..." message="Attendi mentre vengono caricate le competizioni" icon={<Loader2 className="animate-spin" />} />
         );
     }
 

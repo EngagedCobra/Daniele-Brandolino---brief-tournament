@@ -25,21 +25,33 @@ import {
 } from "@/components/ui/item";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2, LockKeyhole, OctagonAlert, PlayCircle, Plus, Trash } from "lucide-react";
+import {
+  ArrowRight,
+  Loader2,
+  LockKeyhole,
+  OctagonAlert,
+  PlayCircle,
+  Plus,
+  Trash,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router";
-import z from 'zod';
+import z from "zod";
 import { GameService } from "../games/games.service";
 import { TeamService } from "../teams/team.service";
 import { CompetitionService } from "./competition.service";
 import CustomEmpty from "@/components/customEmpty";
 
 const editCompetitionSchema = z.object({
-  name: z.string().min(1, "Il nome è obbligatorio").max(50, "Il nome è troppo lungo").trim(),
-  team_number: z.coerce.number().refine(
-    (number) => [4, 8, 16].includes(number)
-  ),
+  name: z
+    .string()
+    .min(1, "Il nome è obbligatorio")
+    .max(50, "Il nome è troppo lungo")
+    .trim(),
+  team_number: z.coerce
+    .number()
+    .refine((number) => [4, 8, 16].includes(number)),
 });
 
 type EditCompetitionData = z.infer<typeof editCompetitionSchema>;
@@ -85,7 +97,7 @@ const SingleCompetition = () => {
   } = useQuery({
     queryKey: ["games", id],
     queryFn: async () => {
-      const res = await GameService.getByCompetition(+id!)
+      const res = await GameService.getByCompetition(+id!);
       return res;
     },
   });
@@ -96,7 +108,7 @@ const SingleCompetition = () => {
     isPending: isTeamsPending,
     isError: isTeamsError,
     error: teamsError,
-    refetch: refetchTeams
+    refetch: refetchTeams,
   } = useQuery({
     queryKey: ["competition-teams", id],
     queryFn: async () => {
@@ -116,8 +128,13 @@ const SingleCompetition = () => {
 
   // Mutation per rimuovere team
   const removeTeamMutation = useMutation({
-    mutationFn: ({ competitionId, teamId }: { competitionId: number; teamId: number }) =>
-      CompetitionService.removeTeam(competitionId, teamId),
+    mutationFn: ({
+      competitionId,
+      teamId,
+    }: {
+      competitionId: number;
+      teamId: number;
+    }) => CompetitionService.removeTeam(competitionId, teamId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["competition-teams", id],
@@ -127,13 +144,18 @@ const SingleCompetition = () => {
 
   // Mutation per aggiungere team
   const addTeamMutation = useMutation({
-    mutationFn: ({ competitionId, teamId }: { competitionId: number; teamId: number }) =>
-      CompetitionService.addTeam(competitionId, teamId),
+    mutationFn: ({
+      competitionId,
+      teamId,
+    }: {
+      competitionId: number;
+      teamId: number;
+    }) => CompetitionService.addTeam(competitionId, teamId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["competition-teams", id],
       });
-      if (canStart) setAddTeamDialogOpen(false)
+      if (canStart) setAddTeamDialogOpen(false);
     },
     onError: (error: Error) => {
       alert(error.message);
@@ -180,7 +202,11 @@ const SingleCompetition = () => {
   };
 
   const handleStartTournament = () => {
-    if (confirm("Sei sicuro di voler avviare il torneo? Non potrai più modificare le squadre.")) {
+    if (
+      confirm(
+        "Sei sicuro di voler avviare il torneo? Non potrai più modificare le squadre.",
+      )
+    ) {
       startTournamentMutation.mutate(+id!);
     }
   };
@@ -192,16 +218,14 @@ const SingleCompetition = () => {
   const canEdit = !hasStarted;
 
   useEffect(() => {
-  if (canStart) {
-    setAddTeamDialogOpen(false);
-  }
-}, [competitionTeams, addTeamMutation.isSuccess]);
-
-
+    if (canStart) {
+      setAddTeamDialogOpen(false);
+    }
+  }, [competitionTeams, addTeamMutation.isSuccess]);
 
   // Teams disponibili da aggiungere (non già nella competizione)
   const availableTeams = allTeams.filter(
-    (team) => !competitionTeams.find((ct) => ct.id === team.id)
+    (team) => !competitionTeams.find((ct) => ct.id === team.id),
   );
 
   // Popola form edit quando si apre dialog
@@ -212,15 +236,36 @@ const SingleCompetition = () => {
     }
   }, [competition, isEditDialogOpen]);
 
-  if ((isCompetitionPending || isTeamsPending || isGamesPending)) {
+  if (isCompetitionPending || isTeamsPending || isGamesPending) {
     return (
-      <CustomEmpty title="Caricamento..." message="Attendi mentre vengono caricata la competizione" icon={<Loader2 className="animate.spin" />} />
+      <CustomEmpty
+        title="Caricamento..."
+        message="Attendi mentre vengono caricata la competizione"
+        icon={<Loader2 className="animate-spin" />}
+      />
     );
   }
 
   if (isCompetitionError || isTeamsError || isGamesError) {
     return (
-      <CustomEmpty title="Errore imprevisto" message={!isCompetitionError ? (isTeamsError ? teamsError.message : gamesError!.message) : competitionError.message} link={!isCompetitionError ? (isTeamsError ? () => refetchTeams() : () => refetchGames) : () => refetchCompetition()} icon={<OctagonAlert />} />
+      <CustomEmpty
+        title="Errore imprevisto"
+        message={
+          !isCompetitionError
+            ? isTeamsError
+              ? teamsError.message
+              : gamesError!.message
+            : competitionError.message
+        }
+        link={
+          !isCompetitionError
+            ? isTeamsError
+              ? () => refetchTeams()
+              : () => refetchGames
+            : () => refetchCompetition()
+        }
+        icon={<OctagonAlert />}
+      />
     );
   }
   return (
@@ -241,14 +286,16 @@ const SingleCompetition = () => {
             {canEdit && (
               <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
                 <DialogTrigger asChild className="px-4 py-2 rounded-2xl">
-                  <Button variant="outline">
-                    Modifica Torneo
-                  </Button>
+                  <Button variant="outline">Modifica Torneo</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Modifica Competizione</DialogTitle>
-                    <form onSubmit={editCompetitionForm.handleSubmit(handleEditCompetition)}>
+                    <form
+                      onSubmit={editCompetitionForm.handleSubmit(
+                        handleEditCompetition,
+                      )}
+                    >
                       <FieldSet className="w-full max-w-xs">
                         <FieldGroup>
                           <Field>
@@ -266,7 +313,10 @@ const SingleCompetition = () => {
                       <FieldSet className="w-full max-w-xs">
                         <FieldGroup>
                           <Field>
-                            <FieldLabel htmlFor="edit-team-number" className="mt-4">
+                            <FieldLabel
+                              htmlFor="edit-team-number"
+                              className="mt-4"
+                            >
                               Numero squadre
                             </FieldLabel>
                             <select
@@ -296,7 +346,9 @@ const SingleCompetition = () => {
                 className="bg-green-500 hover:bg-green-600"
               >
                 <PlayCircle className="mr-2" />
-                {startTournamentMutation.isPending ? "Avvio..." : "Avvia Torneo"}
+                {startTournamentMutation.isPending
+                  ? "Avvio..."
+                  : "Avvia Torneo"}
               </Button>
             )}
             {hasStarted && (
@@ -312,7 +364,10 @@ const SingleCompetition = () => {
         <div className="my-8">
           <h2 className="text-2xl font-semibold mb-4">Squadre Partecipanti</h2>
           {competitionTeams.length === 0 ? (
-            <CustomEmpty title="Nessuna squadra" message="Non ci sono squadre in questa competizione" />
+            <CustomEmpty
+              title="Nessuna squadra"
+              message="Non ci sono squadre in questa competizione"
+            />
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {competitionTeams.map((team) => (
@@ -326,10 +381,7 @@ const SingleCompetition = () => {
                   <ItemActions>
                     <Button
                       onClick={() => handleRemoveTeam(team.id)}
-                      disabled={
-                        removeTeamMutation.isPending ||
-                        hasStarted
-                      }
+                      disabled={removeTeamMutation.isPending || hasStarted}
                       variant="destructive"
                     >
                       {!hasStarted ? <Trash /> : <LockKeyhole />}
@@ -346,11 +398,8 @@ const SingleCompetition = () => {
                 onOpenChange={setAddTeamDialogOpen}
               >
                 <DialogTrigger
-                  className="bg-blue-300 px-4 py-2 rounded-2xl text-white disabled:bg-red-50 disabled:cursor-not-allowed"
-                  disabled={
-                    isTeamsFull ||
-                    availableTeams.length === 0
-                  }
+                  className="bg-black px-4 py-2 rounded-2xl text-white disabled:bg-red-50 disabled:cursor-not-allowed"
+                  disabled={isTeamsFull || availableTeams.length === 0}
                 >
                   <Plus className="inline mr-2 h-4 w-4" />
                   {!canStart ? "Aggiungi squadra" : "Torneo al completo"}
