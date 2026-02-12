@@ -19,9 +19,9 @@ return [
     // Configurazione per MySQL/PostgreSQL
     'host' => 'localhost',
     'port' => 5432, // 3306 per MySQL, 5432 per PostgreSQL
-    'database' => 'postgres',
-    'username' => 'postgres',
-    'password' => 'o:4]U]7"3W8V',
+    'database' => 'db_name',
+    'username' => 'username',
+    'password' => 'password',
     //'charset' => 'utf8mb4', // Solo per MySQL
 
     // Opzioni PDO aggiuntive (opzionale)

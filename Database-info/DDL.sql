@@ -27,7 +27,7 @@ CREATE TABLE games(
   winner int default null,
   "position" smallint not null,
   result varchar(5) not null default '0-0',
-  FOREIGN KEY (competition_ref) references competitions(id),
+  FOREIGN KEY (competition_id) references competitions(id),
   FOREIGN KEY (home_team) references teams(id),
   FOREIGN KEY (away_team) references teams(id),
   created_at timestamp not null default now(),
@@ -43,7 +43,7 @@ CREATE TABLE athletes(
   surname varchar(50) not null,
   age smallint not null,
   team_id int not null,
-  FOREIGN KEY (team_ref) references teams(id),
+  FOREIGN KEY (team_id) references teams(id),
   created_at timestamp not null default now(),
   updated_at timestamp
 );

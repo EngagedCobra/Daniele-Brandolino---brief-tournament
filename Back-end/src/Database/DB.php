@@ -97,7 +97,7 @@ class DB
     private static function getConfig(): array
     {
         if (self::$config === null) {
-            $configPath = __DIR__ . '/../../config/database.php';
+            $configPath = __DIR__ . '/../../config/database.local.php';
             if (!file_exists($configPath)) {
                 throw new RuntimeException("File di configurazione database non trovato");
             }
